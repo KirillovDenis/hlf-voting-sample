@@ -1,0 +1,16 @@
+OrdererOrgs:
+  - Name: Orderer1
+    Domain: test.com
+    Specs:
+      - Hostname: orderer1
+
+PeerOrgs:
+  - Name: Org1
+    Domain: org1.test.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+

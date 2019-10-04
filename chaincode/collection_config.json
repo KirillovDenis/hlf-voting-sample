@@ -1,0 +1,8 @@
+[{
+    "name": "privateKeys",
+    "policy": "OR('Org1MSP.member','idemixMSPID1.member')",
+    "requiredPeerCount": 0,
+    "maxPeerCount": 1,
+    "blockToLive": 0,
+    "memberOnlyRead": true
+}]

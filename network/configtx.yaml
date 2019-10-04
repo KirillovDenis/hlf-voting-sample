@@ -1,0 +1,152 @@
+# ---
+Organizations:
+    - &OrdererOrg1
+        Name: OrdererOrg1
+
+        ID: Orderer1MSP
+
+        MSPDir: crypto-config/ordererOrganizations/test.com/msp
+
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('Orderer1MSP.member')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Orderer1MSP.member')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Orderer1MSP.admin')"
+
+    - &Org1
+        Name: Org1MSP
+
+        ID: Org1MSP
+
+        MSPDir: crypto-config/peerOrganizations/org1.test.com/msp
+
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.peer', 'Org1MSP.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('Org1MSP.admin', 'Org1MSP.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('Org1MSP.admin')"
+
+        AnchorPeers:
+            - Host: peer0.org1.test.com
+              Port: 7051
+
+    - &Org1Idemix
+        Name: idemixMSP1
+
+        ID: idemixMSPID1
+
+        msptype: idemix
+        MSPDir: crypto-config/peerOrganizations/idemix-config
+        
+        Policies:
+            Readers:
+                Type: Signature
+                Rule: "OR('idemixMSPID1.admin', 'idemixMSPID1.peer', 'idemixMSPID1.client')"
+            Writers:
+                Type: Signature
+                Rule: "OR('idemixMSPID1.admin', 'idemixMSPID1.client')"
+            Admins:
+                Type: Signature
+                Rule: "OR('idemixMSPID1.admin')"
+
+Capabilities:
+    Channel: &ChannelCapabilities
+        V1_3: true
+    Orderer: &OrdererCapabilities
+        V1_1: true
+    Application: &ApplicationCapabilities
+        V1_3: true
+        V1_2: false
+        V1_1: false
+
+Application: &ApplicationDefaults
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+    OrdererType: solo
+    Addresses:
+        - orderer1.test.com:7050
+    BatchTimeout: 2s
+    BatchSize:
+        MaxMessageCount: 10
+        AbsoluteMaxBytes: 99 MB
+        PreferredMaxBytes: 512 KB
+    Organizations:
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+
+Channel: &ChannelDefaults
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+
+    Capabilities:
+        <<: *ChannelCapabilities
+
+
+Profiles:
+    SoloOrgsOrdererGenesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *OrdererOrg1
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            SampleConsortium:
+                Organizations:
+                    - *Org1
+                    - *Org1Idemix
+    SoloOrgsChannel:
+        Consortium: SampleConsortium
+        # <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
+                - *Org1Idemix
+            Capabilities:
+                <<: *ApplicationCapabilities

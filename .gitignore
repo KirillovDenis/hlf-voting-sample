@@ -11,16 +11,8 @@ network/fabric
 network/config
 network/crypto-config
 
-clientApp/java/.settings
-clientApp/java/.classpath
-clientApp/java/.project
-clientApp/java/bin
-clientApp/java/src/main/java/app/keys
-clientApp/java/src/main/java/app/*.jso
-clientApp/java/src/main/java/app/*.class
-clientApp/java/src/main/java/app/*.jar
-clientApp/java/target
-
-clientApp/javascript/test.js
+client/users
+client/hlf-voting-sample/.*
+client/hlf-voting-sample/target
 
 .vscode

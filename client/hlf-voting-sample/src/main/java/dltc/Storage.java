@@ -1,6 +1,5 @@
 package dltc;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,7 +31,7 @@ public class Storage {
     private static String workDir = System.getProperty("user.dir");
 
     private static String getUsersDir() {
-        return getWorkDir() + File.separator + usersDir;
+        return usersDir;
     }
 
     private static String getUserDir(String userName) {
@@ -40,7 +39,8 @@ public class Storage {
     }
 
     private static String getUserKeysDir(String userName) {
-        return getWorkDir() + File.separator + getUsersDir() + File.separator + userName + File.separator + getKeysDir();
+        return getWorkDir() + File.separator + getUsersDir() + File.separator + userName + File.separator
+                + getKeysDir();
     }
 
     static void serialize(AppUser appUser, String userName) throws IOException {
@@ -54,19 +54,6 @@ public class Storage {
         try (ObjectOutputStream oos = new ObjectOutputStream(
                 Files.newOutputStream(Paths.get(filePath + "/" + userName + ".jso")))) {
             oos.writeObject(appUser);
-        }
-    }
-
-    static AppUser tryDeserialize(String name, String enrName) throws Exception {
-        if (Files.exists(Paths.get(getWorkDir() + "/" + getUsersDir() + "/" + name + "/" + enrName + ".jso"))) {
-            return deserialize(name, enrName);
-        }
-        return null;
-    }
-
-    static AppUser deserialize(String name, String enrName) throws Exception {
-        try (ObjectInputStream decoder = new ObjectInputStream(Files.newInputStream(Paths.get(getUserDir(name) + "/" + enrName + ".jso")))) {
-            return (AppUser) decoder.readObject();
         }
     }
 
@@ -130,7 +117,7 @@ public class Storage {
 
     public static boolean exist(String userName) {
         File file = new File(getUserDir(userName) + "/" + userName);
-        return  file.exists();
+        return file.exists();
     }
 
     public static KeyPair generateKeyPair(int bits) throws Exception {
@@ -236,18 +223,6 @@ public class Storage {
         return (RSAPublicKey) pub;
     }
 
-//    public static RSAPublicKey loadPubKey(FileInputStream inputStream)
-//            throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-//
-//        byte[] bytes = ByteStreams.toByteArray(inputStream);
-//
-//        X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
-//        KeyFactory kf = KeyFactory.getInstance("RSA");
-//        PublicKey pub = kf.generatePublic(ks);
-//
-//        return (RSAPublicKey) pub;
-//    }
-
     public static RSAPrivateKey loadPrivKey(String filePath)
             throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         Path path = Paths.get(filePath);
@@ -259,18 +234,6 @@ public class Storage {
 
         return (RSAPrivateKey) pvt;
     }
-
-//    public static RSAPrivateKey loadPrivKey(FileInputStream inputStream)
-//            throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-//
-//        byte[] bytes = ByteStreams.toByteArray(inputStream);
-//
-//        PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(bytes);
-//        KeyFactory kf = KeyFactory.getInstance("RSA");
-//        PrivateKey pvt = kf.generatePrivate(ks);
-//
-//        return (RSAPrivateKey) pvt;
-//    }
 
     public static void clearKeys(String userName) {
         File dir = new File(getUserKeysDir(userName));

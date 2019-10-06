@@ -136,20 +136,6 @@ func existState(stub shim.ChaincodeStubInterface, key string) bool {
 	return true
 }
 
-// func decryptBase64(msg string, rsaKey *rsa.PrivateKey) ([]byte, error) {
-// 	msgRaw, err := base64.StdEncoding.DecodeString(msg)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	decryptedRaw, err := rsa.DecryptPKCS1v15(rand.Reader, rsaKey, msgRaw)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return decryptedRaw, nil
-// }
-
 func getCompositeSignedUser(stub shim.ChaincodeStubInterface, votingID string, userID string) (string, error) {
 	return stub.CreateCompositeKey(votingID, []string{constSigneddUser, userID})
 }
@@ -255,17 +241,6 @@ func checkSign(userPubKey *rsa.PublicKey, signedHashKey string, votingPubKey *rs
 	return fmt.Errorf("Invalid signature")
 }
 
-// func signRevokedKey(key *rsa.PublicKey, singerKey *rsa.PrivateKey) (*string, error) {
-// 	bigHashKey, err := getHashBigStr(key)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	result := bigHashKey.Exp(bigHashKey, singerKey.D, singerKey.N).String()
-
-// 	return &result, nil
-// }
-
 func getHash(key *rsa.PublicKey) (*string, error) {
 	bytesForHash, err := encodePublicKey(key)
 	if err != nil {
@@ -275,26 +250,6 @@ func getHash(key *rsa.PublicKey) (*string, error) {
 	result := fmt.Sprintf("%x", sha256.Sum256(bytesForHash))
 	return &result, nil
 }
-
-// func getHashBigStr(key *rsa.PublicKey) (*big.Int, error) {
-// 	hexHash, err := getHash(key)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	bytes, err := hex.DecodeString(*hexHash)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	hashedKey := &big.Int{}
-// 	hashedKey.SetBytes(bytes)
-// 	return hashedKey, nil
-// }
-
-// func getHashSHA256(data string) string {
-// 	result := sha256.Sum256([]byte(data))
-// 	return fmt.Sprintf("%x", result)
-// }
 
 func encrypt(message string, exp *big.Int, module *big.Int) []byte {
 	result, msg := &big.Int{}, &big.Int{}

@@ -17,7 +17,7 @@ public class Main {
 
             AppUser appUser = getAppUser(fabricClient);
 
-            String votingId = "d3ee6cc5-1e0f-49a2-a419-2a52b16d204a";// fabricClient.createVoting(appUser, getVoting());
+            String votingId = fabricClient.createVoting(appUser, getVoting());
             System.out.println("votingId: " + votingId);
             
             String voting = fabricClient.getVoting(appUser, votingId);

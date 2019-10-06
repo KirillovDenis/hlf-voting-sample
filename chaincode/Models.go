@@ -13,6 +13,7 @@ type voting struct {
 	Participants []string         `json:"participants"`
 	Results      *votingResults   `json:"results"`
 	Time         votingTime       `json:"time"`
+	PubKey       string           `json:"pubKey"`
 }
 
 type votingQuestion struct {
@@ -32,14 +33,14 @@ type votingTime struct {
 }
 
 type votingResults struct {
-	Questions    map[string]map[string][]string `json:"questions"`
-	YetEncrypted bool                           `json:"yetEncrypted"`
+	Questions map[string]map[string][]string `json:"questions"`
 }
 
 type votingBallot struct {
-	UserID    string           `json:"userId"`
 	VotingID  string           `json:"votingId"`
 	Questions []votingQuestion `json:"questions"`
+	Key       string           `json:"key"`
+	SignedKey string           `json:"signedKey"`
 }
 
 type keyModel interface {
@@ -50,4 +51,10 @@ type userRegData struct {
 	UserID   string `json:"userId"`
 	VotingID string `json:"votingId"`
 	Data     string `json:"data"`
+}
+
+type userTallingData struct {
+	VotingID      string `json:"votingId"`
+	Key           string `json:"key"`
+	SignedHashKey string `json:"signedKey"`
 }

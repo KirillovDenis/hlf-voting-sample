@@ -13,8 +13,12 @@ var logger *shim.ChaincodeLogger
 type VotingChaincode struct {
 }
 
-var bcFunctions = map[string]func(shim.ChaincodeStubInterface, []string) peer.Response{
-	"createVoting": createVoting,
+var bcFunctions = map[string]func(shim.ChaincodeStubInterface, []string) ([]byte, error){
+	"createVoting":               createVoting,
+	"getBlindSign":               getBlindSign,
+	"registerUserInVotingIdemix": registerUserInVotingIdemix,
+	"voteIdemix":                 voteIdemix,
+	"getResults":                 getResults,
 }
 
 // Init chaincode interface
@@ -42,9 +46,13 @@ func (t *VotingChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response
 		return shim.Error("Received unknown function invocation.")
 	}
 
-	response := bcFunc(stub, args)
-	logger.Info("=================End function=================")
-	return response
+	response, err := bcFunc(stub, args)
+	if err != nil {
+		return shim.Success(response)
+	}
+
+	logger.Error(err)
+	return shim.Error(err.Error())
 }
 
 // Just main stub

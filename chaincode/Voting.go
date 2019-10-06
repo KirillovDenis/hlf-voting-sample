@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/core/chaincode/shim/ext/cid"
@@ -22,9 +23,9 @@ func createVoting(stub shim.ChaincodeStubInterface, args []string) ([]byte, erro
 		return nil, err
 	}
 
-	// voting.ID = uuid.New().String()
+	voting.ID = uuid.New().String()
 
-	privKey, err := getPrivateKey(2048)
+	privKey, err := getPrivateKey(512)
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +53,19 @@ func createVoting(stub shim.ChaincodeStubInterface, args []string) ([]byte, erro
 	}
 
 	return []byte(voting.ID), nil
+}
+
+func getVoting(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("Incorrect number of arguments. Expecting 1 (votingId)")
+	}
+
+	voting := &voting{ID: args[0]}
+	if err := loadState(stub, voting); err != nil {
+		return nil, err
+	}
+
+	return marshal(voting)
 }
 
 func getBlindSign(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {

@@ -15,6 +15,7 @@ type VotingChaincode struct {
 
 var bcFunctions = map[string]func(shim.ChaincodeStubInterface, []string) ([]byte, error){
 	"createVoting":               createVoting,
+	"getVoting":                  getVoting,
 	"getBlindSign":               getBlindSign,
 	"registerUserInVotingIdemix": registerUserInVotingIdemix,
 	"voteIdemix":                 voteIdemix,
@@ -48,11 +49,11 @@ func (t *VotingChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response
 
 	response, err := bcFunc(stub, args)
 	if err != nil {
-		return shim.Success(response)
+		logger.Error(err)
+		return shim.Error(err.Error())
 	}
 
-	logger.Error(err)
-	return shim.Error(err.Error())
+	return shim.Success(response)
 }
 
 // Just main stub

@@ -11,7 +11,8 @@ network/fabric
 network/config
 network/crypto-config
 
-client/users
+users
+client/hlf-voting-sample/users
 client/hlf-voting-sample/.*
 client/hlf-voting-sample/target
 

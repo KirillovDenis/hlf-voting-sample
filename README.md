@@ -6,7 +6,7 @@ Samples for Hyperledger Bootcamp session "HLF Identity Mixer in secret e-voting"
 ### Installing
 In order to raise sample network:
 
-1. Copy this repository and change working directory to network
+1. Copy this repository and change working directory to "network"
 ```
 git clone git@github.com:KirillovDenis/hlf-voting-sample.git
 
@@ -28,7 +28,7 @@ mvn exec:java
 ```
 
 ### Cleaning
-In order to remove network run in "network" directory
+In order to remove network change working directory to "network" and run the following script
 ```
 ./clear.sh
 ```

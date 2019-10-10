@@ -11,3 +11,4 @@ docker exec fabric_host_test.com rm -rf config fabric crypto-config
 docker kill fabric_host_test.com 
 docker rm fabric_host_test.com
 
+rm -r ../client/hlf-voting-sample/users

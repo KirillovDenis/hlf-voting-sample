@@ -5,7 +5,7 @@ Organizations:
 
         ID: Orderer1MSP
 
-        MSPDir: crypto-config/ordererOrganizations/test.com/msp
+        MSPDir: crypto-config/ordererOrganizations/sample.com/msp
 
         Policies:
             Readers:
@@ -23,7 +23,7 @@ Organizations:
 
         ID: Org1MSP
 
-        MSPDir: crypto-config/peerOrganizations/org1.test.com/msp
+        MSPDir: crypto-config/peerOrganizations/org1.sample.com/msp
 
         Policies:
             Readers:
@@ -37,7 +37,7 @@ Organizations:
                 Rule: "OR('Org1MSP.admin')"
 
         AnchorPeers:
-            - Host: peer0.org1.test.com
+            - Host: peer0.org1.sample.com
               Port: 7051
 
     - &Org1Idemix
@@ -88,7 +88,7 @@ Application: &ApplicationDefaults
 Orderer: &OrdererDefaults
     OrdererType: solo
     Addresses:
-        - orderer1.test.com:7050
+        - orderer1.sample.com:7050
     BatchTimeout: 2s
     BatchSize:
         MaxMessageCount: 10

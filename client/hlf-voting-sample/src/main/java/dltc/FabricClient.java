@@ -217,9 +217,9 @@ public class FabricClient {
     }
 
     private Channel getChannel(HFClient client) throws InvalidArgumentException, TransactionException {
-        Peer peer = client.newPeer("peer0.org1.test.com", "grpc://127.0.0.1:7051");
-        EventHub eventHub = client.newEventHub("eventhub01", "grpc://127.0.0.1:7053");
-        Orderer orderer = client.newOrderer("orderer1.test.com", "grpc://127.0.0.1:7050");
+        Peer peer = client.newPeer("peer0.org1.sample.com", "grpc://127.0.0.1:57051");
+        EventHub eventHub = client.newEventHub("eventhub01", "grpc://127.0.0.1:57053");
+        Orderer orderer = client.newOrderer("orderer1.sample.com", "grpc://127.0.0.1:57050");
         Channel channel = client.newChannel(channelName);
         channel.addPeer(peer);
         channel.addEventHub(eventHub);

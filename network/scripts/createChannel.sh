@@ -5,7 +5,7 @@ CC_SRC_PATH=github.com/chaincode/
 VER_CC=1.0
 CC_NAME=votingcc
 ACT=instantiate
-ORDERER_PEER=orderer1.test.com:7050
+ORDERER_PEER=orderer1.sample.com:7050
     
 echo "##########################################################"
 echo "#####              Create channel                #########"

@@ -13,9 +13,9 @@ fi
 
 mkdir -p crypto-config/peerOrganizations/idemix-config/msp/
 
-CA_KEY=$(ls ./crypto-config/peerOrganizations/org1.test.com/ca/ | grep -i sk)
+CA_KEY=$(ls ./crypto-config/peerOrganizations/org1.sample.com/ca/ | grep -i sk)
 echo $CA_KEY
 
-mv ./crypto-config/peerOrganizations/org1.test.com/ca/$CA_KEY  ./crypto-config/peerOrganizations/org1.test.com/ca/ca-key.pem
-mv ./crypto-config/peerOrganizations/org1.test.com/ca/ca.org1.test.com-cert.pem  ./crypto-config/peerOrganizations/org1.test.com/ca/ca-cert.pem
+mv ./crypto-config/peerOrganizations/org1.sample.com/ca/$CA_KEY  ./crypto-config/peerOrganizations/org1.sample.com/ca/ca-key.pem
+mv ./crypto-config/peerOrganizations/org1.sample.com/ca/ca.org1.sample.com-cert.pem  ./crypto-config/peerOrganizations/org1.sample.com/ca/ca-cert.pem
 

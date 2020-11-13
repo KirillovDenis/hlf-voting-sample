@@ -11,7 +11,7 @@ RUN apt-get update \
         && apt-get install -y vim
 
 RUN cd $GOPATH/src/github.com/hyperledger \
-        && git clone --single-branch -b release-1.4 --depth 1 http://gerrit.hyperledger.org/r/fabric 
+        && git clone --single-branch -b release-1.4 --depth 1 http://gerrit.hyperledger.org/fabric 
 
 RUN go get -u github.com/google/uuid
 

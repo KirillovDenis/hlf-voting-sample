@@ -47,7 +47,7 @@ public class FabricClient {
     private HFClient clientIdemix = null;
 
     public FabricClient(String url) {
-        this.caClient = getHfCaClient("http://127.0.0.1:7054", null);
+        this.caClient = getHfCaClient("http://127.0.0.1:57054", null);
     }
 
     public String createVoting(AppUser appUser, JSONObject voting) throws Exception {

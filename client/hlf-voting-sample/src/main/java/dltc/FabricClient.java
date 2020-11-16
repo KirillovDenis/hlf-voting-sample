@@ -1,19 +1,12 @@
 package dltc;
 
+import org.apache.commons.codec.binary.Hex;
+import org.hyperledger.fabric.protos.ledger.rwset.kvrwset.KvRwset;
 import org.hyperledger.fabric.sdk.BlockEvent.TransactionEvent;
-import org.hyperledger.fabric.sdk.BlockListener;
-import org.hyperledger.fabric.sdk.ChaincodeID;
-import org.hyperledger.fabric.sdk.Channel;
-import org.hyperledger.fabric.sdk.Enrollment;
-import org.hyperledger.fabric.sdk.EventHub;
-import org.hyperledger.fabric.sdk.HFClient;
-import org.hyperledger.fabric.sdk.Orderer;
-import org.hyperledger.fabric.sdk.Peer;
-import org.hyperledger.fabric.sdk.ProposalResponse;
-import org.hyperledger.fabric.sdk.QueryByChaincodeRequest;
-import org.hyperledger.fabric.sdk.TransactionProposalRequest;
+import org.hyperledger.fabric.sdk.*;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
-import org.hyperledger.fabric.sdk.exception.ProposalException;
+import org.hyperledger.fabric.sdk.exception.InvalidProtocolBufferRuntimeException;
+import org.hyperledger.fabric.sdk.exception.NetworkConfigurationException;
 import org.hyperledger.fabric.sdk.exception.TransactionException;
 import org.hyperledger.fabric.sdk.security.CryptoSuite;
 import org.hyperledger.fabric_ca.sdk.Attribute;
@@ -29,25 +22,26 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.fabric.sdk.BlockInfo.EnvelopeType.TRANSACTION_ENVELOPE;
 
 public class FabricClient {
     private static final String channelName = "mychannel";
     private static final String chaincodeName = "votingcc";
     private static final String mspIdemix = "idemixMSPID1";
 
-    private HFCAClient caClient;
+    private final NetworkConfig config;
+    private final HFCAClient caClient;
+
     private HFClient client = null;
     private HFClient clientIdemix = null;
 
-    public FabricClient(String url) {
-        this.caClient = getHfCaClient("http://127.0.0.1:57054", null);
+    public FabricClient(NetworkConfig config) {
+        this.config = config;
+        NetworkConfig.CAInfo info = config.getClientOrganization().getCertificateAuthorities().get(0);
+        this.caClient = this.getHfCaClient(info.getUrl(), info.getProperties());
     }
 
     public String createVoting(AppUser appUser, JSONObject voting) throws Exception {
@@ -216,16 +210,9 @@ public class FabricClient {
         return client;
     }
 
-    private Channel getChannel(HFClient client) throws InvalidArgumentException, TransactionException {
-        Peer peer = client.newPeer("peer0.org1.sample.com", "grpc://127.0.0.1:57051");
-        EventHub eventHub = client.newEventHub("eventhub01", "grpc://127.0.0.1:57053");
-        Orderer orderer = client.newOrderer("orderer1.sample.com", "grpc://127.0.0.1:57050");
-        Channel channel = client.newChannel(channelName);
-        channel.addPeer(peer);
-        channel.addEventHub(eventHub);
-        channel.addOrderer(orderer);
+    private Channel getChannel(HFClient client) throws InvalidArgumentException, TransactionException, NetworkConfigurationException {
+        Channel channel = client.loadChannelFromConfig(channelName, config);
         channel.initialize();
-
         return channel;
     }
 
@@ -246,8 +233,7 @@ public class FabricClient {
         return getClient(appUser);
     }
 
-    private String invokeBlockChain(AppUser appUser, boolean isIdemix, String function, String... args)
-            throws Exception, ProposalException, InvalidArgumentException {
+    private String invokeBlockChain(AppUser appUser, boolean isIdemix, String function, String... args) throws Exception {
         HFClient client = getHFClient(appUser, isIdemix);
         Channel channel = client.getChannel(channelName);
 
@@ -257,23 +243,40 @@ public class FabricClient {
         tpr.setFcn(function);
         tpr.setArgs(args);
 
-        Collection<ProposalResponse> resps = channel.sendTransactionProposal(tpr);
+
+
+        Collection<ProposalResponse> resps = channel.sendTransactionProposal(tpr, getClientPeers(channel));
         byte[] response = handlePorposalResponses(resps);
 
-        Vector<String> txnIds = new Vector<>();
-        String txnId = resps.iterator().next().getTransactionID();
-        String blockEventListenerHandle = setBlockEventListener(channel, txnIds);
+        CompletableFuture<TransactionEvent> future = channel.sendTransaction(resps,
+                Channel.TransactionOptions.createTransactionOptions()
+                        .nOfEvents(Channel.NOfEvents.createNofEvents()
+                                .setN(1)
+                                .addEventHubs(channel.getEventHubs())
+                                .addPeers(channel.getPeers())
+                        )
+        );
 
-        channel.sendTransaction(resps);
-
-        boolean eventDone = false;
-        eventDone = waitForBlockEvent(150, channel, txnIds, blockEventListenerHandle, txnId);
-
-        if (!eventDone) {
-            return null;
-        }
+        future.thenAccept(result -> {
+            System.out.println("ok");
+        }).get();
 
         return response == null ? null : new String(response);
+    }
+
+    private List<Peer> getClientPeers(Channel channel) throws Exception {
+        List<Peer> orgPeers = new ArrayList<>();
+        for (Peer peer : channel.getPeers()) {
+            if (config.getClientOrganization().getPeerNames().contains(peer.getName())) {
+                orgPeers.add(peer);
+            }
+        }
+
+        if (orgPeers.isEmpty()) {
+            throw new Exception("Not found any client org peer");
+        }
+
+        return orgPeers;
     }
 
     private String queryBlockChain(AppUser appUser, boolean isIdemix, String function, String... args)
@@ -293,6 +296,123 @@ public class FabricClient {
         return response == null ? null : new String(response);
     }
 
+
+    public void readBlocks(AppUser appUser) throws Exception {
+        try {
+            HFClient client = getHFClient(appUser, false);
+            Channel channel = client.getChannel(channelName);
+            BlockchainInfo channelInfo = channel.queryBlockchainInfo();
+
+            for (long current = 0; current <  channelInfo.getHeight(); current++) {
+                BlockInfo returnedBlock = channel.queryBlockByNumber(current);
+                final long blockNumber = returnedBlock.getBlockNumber();
+
+                System.out.println(String.format("current block number %d has data hash: %s", blockNumber, Hex.encodeHexString(returnedBlock.getDataHash())));
+                System.out.println(String.format("current block number %d has previous hash id: %s", blockNumber, Hex.encodeHexString(returnedBlock.getPreviousHash())));
+                System.out.println(String.format("current block number %d has calculated block hash is %s", blockNumber, Hex.encodeHexString(SDKUtils.calculateBlockHash(client,
+                        blockNumber, returnedBlock.getPreviousHash(), returnedBlock.getDataHash()))));
+
+                System.out.println(String.format("current block number %d has %d envelope count:", blockNumber, returnedBlock.getEnvelopeCount()));
+                int i = 0;
+                for (BlockInfo.EnvelopeInfo envelopeInfo : returnedBlock.getEnvelopeInfos()) {
+                    ++i;
+
+                    System.out.println(String.format("  Transaction number %d has transaction id: %s", i, envelopeInfo.getTransactionID()));
+                    final String channelId = envelopeInfo.getChannelId();
+
+                    System.out.println(String.format("  Transaction number %d has channel id: %s", i, channelId));
+                    System.out.println(String.format("  Transaction number %d has epoch: %d", i, envelopeInfo.getEpoch()));
+                    System.out.println(String.format("  Transaction number %d has transaction timestamp: %tB %<te,  %<tY  %<tT %<Tp", i, envelopeInfo.getTimestamp()));
+                    System.out.println(String.format("  Transaction number %d has type id: %s", i, "" + envelopeInfo.getType()));
+                    System.out.println(String.format("  Transaction number %d has nonce : %s", i, "" + Hex.encodeHexString(envelopeInfo.getNonce())));
+                    System.out.println(String.format("  Transaction number %d has submitter mspid: %s", i, envelopeInfo.getCreator().getMspid()));
+
+                    if (envelopeInfo.getType() == TRANSACTION_ENVELOPE) {
+                        BlockInfo.TransactionEnvelopeInfo transactionEnvelopeInfo = (BlockInfo.TransactionEnvelopeInfo) envelopeInfo;
+
+                        System.out.println(String.format("  Transaction number %d has %d actions", i, transactionEnvelopeInfo.getTransactionActionInfoCount()));
+
+                        System.out.println(String.format("  Transaction number %d isValid %b", i, transactionEnvelopeInfo.isValid()));
+                        System.out.println(String.format("  Transaction number %d validation code %d", i, transactionEnvelopeInfo.getValidationCode()));
+
+                        int j = 0;
+                        for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo transactionActionInfo : transactionEnvelopeInfo.getTransactionActionInfos()) {
+                            ++j;
+                            System.out.println(String.format("   Transaction action %d has response status %d", j, transactionActionInfo.getResponseStatus()));
+
+                            System.out.println(String.format("   Transaction action %d has response message bytes as string: %s", j,
+                                    printableString(new String(transactionActionInfo.getResponseMessageBytes(), UTF_8))));
+                            System.out.println(String.format("   Transaction action %d has %d endorsements", j, transactionActionInfo.getEndorsementsCount()));
+
+                            for (int n = 0; n < transactionActionInfo.getEndorsementsCount(); ++n) {
+                                BlockInfo.EndorserInfo endorserInfo = transactionActionInfo.getEndorsementInfo(n);
+                                System.out.println(String.format("Endorser %d endorser: mspid %s ", n, endorserInfo.getMspid()));
+                            }
+                            System.out.println(String.format("   Transaction action %d has %d chaincode input arguments", j, transactionActionInfo.getChaincodeInputArgsCount()));
+                            for (int z = 0; z < transactionActionInfo.getChaincodeInputArgsCount(); ++z) {
+                                System.out.println(String.format("     Transaction action %d has chaincode input argument %d is: %s", j, z,
+                                        printableString(new String(transactionActionInfo.getChaincodeInputArgs(z), UTF_8))));
+                            }
+
+                            System.out.println(String.format("   Transaction action %d proposal response status: %d", j,
+                                    transactionActionInfo.getProposalResponseStatus()));
+                            System.out.println(String.format("   Transaction action %d proposal response payload: %s", j,
+                                    printableString(new String(transactionActionInfo.getProposalResponsePayload()))));
+
+                            String chaincodeIDName = transactionActionInfo.getChaincodeIDName();
+                            String chaincodeIDVersion = transactionActionInfo.getChaincodeIDVersion();
+                            String chaincodeIDPath = transactionActionInfo.getChaincodeIDPath();
+                            System.out.println(String.format("   Transaction action %d proposal chaincodeIDName: %s, chaincodeIDVersion: %s,  chaincodeIDPath: %s ", j,
+                                    chaincodeIDName, chaincodeIDVersion, chaincodeIDPath));
+
+                            TxReadWriteSetInfo rwsetInfo = transactionActionInfo.getTxReadWriteSet();
+                            if (null != rwsetInfo) {
+                                System.out.println(String.format("   Transaction action %d has %d name space read write sets", j, rwsetInfo.getNsRwsetCount()));
+
+                                for (TxReadWriteSetInfo.NsRwsetInfo nsRwsetInfo : rwsetInfo.getNsRwsetInfos()) {
+                                    final String namespace = nsRwsetInfo.getNamespace();
+                                    KvRwset.KVRWSet rws = nsRwsetInfo.getRwset();
+
+                                    int rs = -1;
+                                    for (KvRwset.KVRead readList : rws.getReadsList()) {
+                                        rs++;
+
+                                        System.out.println(String.format("     Namespace %s read set %d key %s  version [%d:%d]", namespace, rs, readList.getKey(),
+                                                readList.getVersion().getBlockNum(), readList.getVersion().getTxNum()));
+
+                                    }
+
+                                    rs = -1;
+                                    for (KvRwset.KVWrite writeList : rws.getWritesList()) {
+                                        rs++;
+                                        String valAsString = printableString(new String(writeList.getValue().toByteArray(), UTF_8));
+
+                                        System.out.println(String.format("     Namespace %s write set %d key %s has value '%s' ", namespace, rs, writeList.getKey(), valAsString));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (InvalidProtocolBufferRuntimeException e) {
+            throw e.getCause();
+        }
+    }
+    static String printableString(final String string) {
+        int maxLogStringLength = 64;
+        if (string == null || string.length() == 0) {
+            return string;
+        }
+
+        String ret = string.replaceAll("[^\\p{Print}]", "?");
+
+        ret = ret.substring(0, Math.min(ret.length(), maxLogStringLength)) + (ret.length() > maxLogStringLength ? "..." : "");
+
+        return ret;
+
+    }
+
     private byte[] handlePorposalResponses(Collection<ProposalResponse> presps) throws Exception {
         byte[] response = null;
 
@@ -300,7 +420,7 @@ public class FabricClient {
             if (pres.getStatus() != ProposalResponse.Status.SUCCESS) {
                 throw new Exception(pres.getMessage());
             }
-
+            System.out.println(new String(pres.getChaincodeActionResponsePayload()));
             if (response == null) {
                 response = pres.getChaincodeActionResponsePayload();
                 continue;
@@ -312,43 +432,5 @@ public class FabricClient {
         }
 
         return response;
-    }
-
-    private String setBlockEventListener(Channel channel, Vector<String> completedTxns)
-            throws InvalidArgumentException {
-
-        BlockListener blockListener = blockEvent -> {
-            System.out.println("block data count = " + blockEvent.getBlock().getData().getDataCount());
-            Iterator<TransactionEvent> iterator = blockEvent.getTransactionEvents().iterator();
-            while (iterator.hasNext()) {
-                TransactionEvent next = iterator.next();
-                System.out.println("txn id = " + next.getTransactionID());
-                completedTxns.add(next.getTransactionID());
-            }
-        };
-        String eventListenerHandle = channel.registerBlockListener(blockListener);
-        return eventListenerHandle;
-    }
-
-    private boolean waitForBlockEvent(Integer timeout, Channel channel, Vector<String> chaincodeEvents,
-            String chaincodeEventListenerHandle, String txnId) throws InvalidArgumentException {
-        boolean eventDone = false;
-        if (chaincodeEventListenerHandle != null && txnId != null) {
-            for (int i = 0; i < timeout; i++) {
-                if (chaincodeEvents.contains(txnId)) {
-                    eventDone = true;
-                    break;
-                } else {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        channel.unregisterBlockListener(chaincodeEventListenerHandle);
-        return eventDone;
     }
 }

@@ -27,3 +27,9 @@ if [ "$?" -ne 0 ]; then
   echo "Failed to generate anchor peer update for Org1MSP..."
   exit 1
 fi
+
+configtxgen -profile SoloOrgsChannel -outputAnchorPeersUpdate ./config/Org2MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org2MSP
+if [ "$?" -ne 0 ]; then
+  echo "Failed to generate anchor peer update for Org2MSP..."
+  exit 1
+fi

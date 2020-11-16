@@ -12,7 +12,7 @@ services:
     environment:
       - FABRIC_CA_SERVER_CA_NAME=ca.sample.com
     ports:
-      - "57054:7054"
+      - 57054:7054
     volumes:
       - ./../crypto-config/peerOrganizations/org1.sample.com/ca/:/etc/hyperledger/fabric-ca-server-config
     networks:
@@ -43,6 +43,7 @@ services:
     environment:
       - CORE_PEER_ID=peer0.org1.sample.com
       - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
       - CORE_PEER_ADDRESS=peer0.org1.sample.com:7051
       - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb.sample.com0:5984
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.sample.com:7051
@@ -64,7 +65,56 @@ services:
       - COUCHDB_USER=
       - COUCHDB_PASSWORD=
     ports:
-      - "55984:5984"
+      - 55984:5984
+    networks:
+      - basic
+
+  ca2.sample.com:
+    container_name: ca2.sample.com
+    extends:
+      file: base.yaml
+      service: ca-base
+    environment:
+      - FABRIC_CA_SERVER_CA_NAME=ca2.sample.com
+    ports:
+      - 58054:7054
+    volumes:
+      - ./../crypto-config/peerOrganizations/org2.sample.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    networks:
+      - basic
+
+  peer0.org2.sample.com:
+    container_name: peer0.org2.sample.com
+    image: hyperledger/fabric-peer
+    extends:
+      file: base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.org2.sample.com
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_ADDRESS=peer0.org2.sample.com:9051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb2.sample.com0:5984
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.sample.com:9051
+    ports:
+      - 9051:9051
+      - 9053:9053
+    volumes:
+        - ./../crypto-config/peerOrganizations/org2.sample.com/peers/peer0.org2.sample.com/msp:/etc/hyperledger/fabric/msp
+        - ./../crypto-config/peerOrganizations/org2.sample.com/peers/peer0.org2.sample.com/tls:/etc/hyperledger/fabric/tls
+    depends_on:
+      - couchdb.sample.com0
+    networks:
+      - basic
+
+  couchdb2.sample.com0:
+    container_name: couchdb2.sample.com0
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - 57984:5984
     networks:
       - basic
 

@@ -290,7 +290,7 @@ public class FabricClient {
         qpr.setFcn(function);
         qpr.setArgs(args);
 
-        Collection<ProposalResponse> presps = channel.queryByChaincode(qpr);
+        Collection<ProposalResponse> presps = channel.queryByChaincode(qpr, getClientPeers(channel));
         byte[] response = handlePorposalResponses(presps);
 
         return response == null ? null : new String(response);
@@ -301,73 +301,71 @@ public class FabricClient {
         try {
             HFClient client = getHFClient(appUser, false);
             Channel channel = client.getChannel(channelName);
-            BlockchainInfo channelInfo = channel.queryBlockchainInfo();
+            Peer peer = getClientPeers(channel).get(0);
+            BlockchainInfo channelInfo = channel.queryBlockchainInfo(peer);
 
             for (long current = 0; current <  channelInfo.getHeight(); current++) {
-                BlockInfo returnedBlock = channel.queryBlockByNumber(current);
+                BlockInfo returnedBlock = channel.queryBlockByNumber(peer, current);
                 final long blockNumber = returnedBlock.getBlockNumber();
 
-                System.out.println(String.format("current block number %d has data hash: %s", blockNumber, Hex.encodeHexString(returnedBlock.getDataHash())));
-                System.out.println(String.format("current block number %d has previous hash id: %s", blockNumber, Hex.encodeHexString(returnedBlock.getPreviousHash())));
-                System.out.println(String.format("current block number %d has calculated block hash is %s", blockNumber, Hex.encodeHexString(SDKUtils.calculateBlockHash(client,
+                System.out.println(String.format("current block number %d ", blockNumber));
+                System.out.println(String.format(" data hash: %s", Hex.encodeHexString(returnedBlock.getDataHash())));
+                System.out.println(String.format(" previous hash id: %s", Hex.encodeHexString(returnedBlock.getPreviousHash())));
+                System.out.println(String.format(" calculated block hash is %s", Hex.encodeHexString(SDKUtils.calculateBlockHash(client,
                         blockNumber, returnedBlock.getPreviousHash(), returnedBlock.getDataHash()))));
 
-                System.out.println(String.format("current block number %d has %d envelope count:", blockNumber, returnedBlock.getEnvelopeCount()));
+                System.out.println(String.format(" has %d envelope count:", returnedBlock.getEnvelopeCount()));
                 int i = 0;
                 for (BlockInfo.EnvelopeInfo envelopeInfo : returnedBlock.getEnvelopeInfos()) {
                     ++i;
 
                     System.out.println(String.format("  Transaction number %d has transaction id: %s", i, envelopeInfo.getTransactionID()));
-                    final String channelId = envelopeInfo.getChannelId();
-
-                    System.out.println(String.format("  Transaction number %d has channel id: %s", i, channelId));
-                    System.out.println(String.format("  Transaction number %d has epoch: %d", i, envelopeInfo.getEpoch()));
-                    System.out.println(String.format("  Transaction number %d has transaction timestamp: %tB %<te,  %<tY  %<tT %<Tp", i, envelopeInfo.getTimestamp()));
-                    System.out.println(String.format("  Transaction number %d has type id: %s", i, "" + envelopeInfo.getType()));
-                    System.out.println(String.format("  Transaction number %d has nonce : %s", i, "" + Hex.encodeHexString(envelopeInfo.getNonce())));
-                    System.out.println(String.format("  Transaction number %d has submitter mspid: %s", i, envelopeInfo.getCreator().getMspid()));
+                    System.out.println(String.format("   channel id: %s", envelopeInfo.getChannelId()));
+                    System.out.println(String.format("   transaction timestamp: %tB %<te,  %<tY  %<tT %<Tp", envelopeInfo.getTimestamp()));
+                    System.out.println(String.format("   type id: %s", "" + envelopeInfo.getType()));
+                    System.out.println(String.format("   nonce : %s", "" + Hex.encodeHexString(envelopeInfo.getNonce())));
+                    System.out.println(String.format("   submitter mspid: %s", envelopeInfo.getCreator().getMspid()));
 
                     if (envelopeInfo.getType() == TRANSACTION_ENVELOPE) {
                         BlockInfo.TransactionEnvelopeInfo transactionEnvelopeInfo = (BlockInfo.TransactionEnvelopeInfo) envelopeInfo;
 
-                        System.out.println(String.format("  Transaction number %d has %d actions", i, transactionEnvelopeInfo.getTransactionActionInfoCount()));
-
-                        System.out.println(String.format("  Transaction number %d isValid %b", i, transactionEnvelopeInfo.isValid()));
-                        System.out.println(String.format("  Transaction number %d validation code %d", i, transactionEnvelopeInfo.getValidationCode()));
+                        System.out.println(String.format("   has %d actions", transactionEnvelopeInfo.getTransactionActionInfoCount()));
+                        System.out.println(String.format("   isValid %b", transactionEnvelopeInfo.isValid()));
+                        System.out.println(String.format("   validation code %d", transactionEnvelopeInfo.getValidationCode()));
 
                         int j = 0;
                         for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo transactionActionInfo : transactionEnvelopeInfo.getTransactionActionInfos()) {
                             ++j;
-                            System.out.println(String.format("   Transaction action %d has response status %d", j, transactionActionInfo.getResponseStatus()));
-
-                            System.out.println(String.format("   Transaction action %d has response message bytes as string: %s", j,
+                            System.out.println(String.format("    Transaction action %d", j));
+                            System.out.println(String.format("    response status %d", transactionActionInfo.getResponseStatus()));
+                            System.out.println(String.format("    response message bytes as string: %s",
                                     printableString(new String(transactionActionInfo.getResponseMessageBytes(), UTF_8))));
-                            System.out.println(String.format("   Transaction action %d has %d endorsements", j, transactionActionInfo.getEndorsementsCount()));
+                            System.out.println(String.format("    has %d endorsements", transactionActionInfo.getEndorsementsCount()));
 
                             for (int n = 0; n < transactionActionInfo.getEndorsementsCount(); ++n) {
                                 BlockInfo.EndorserInfo endorserInfo = transactionActionInfo.getEndorsementInfo(n);
-                                System.out.println(String.format("Endorser %d endorser: mspid %s ", n, endorserInfo.getMspid()));
+                                System.out.println(String.format("     Endorser %d endorser: mspid %s ", n, endorserInfo.getMspid()));
                             }
-                            System.out.println(String.format("   Transaction action %d has %d chaincode input arguments", j, transactionActionInfo.getChaincodeInputArgsCount()));
+                            System.out.println(String.format("    has %d chaincode input arguments", transactionActionInfo.getChaincodeInputArgsCount()));
                             for (int z = 0; z < transactionActionInfo.getChaincodeInputArgsCount(); ++z) {
-                                System.out.println(String.format("     Transaction action %d has chaincode input argument %d is: %s", j, z,
+                                System.out.println(String.format("      has chaincode input argument %d is: %s", z,
                                         printableString(new String(transactionActionInfo.getChaincodeInputArgs(z), UTF_8))));
                             }
 
-                            System.out.println(String.format("   Transaction action %d proposal response status: %d", j,
+                            System.out.println(String.format("    proposal response status: %d",
                                     transactionActionInfo.getProposalResponseStatus()));
-                            System.out.println(String.format("   Transaction action %d proposal response payload: %s", j,
+                            System.out.println(String.format("    proposal response payload: %s",
                                     printableString(new String(transactionActionInfo.getProposalResponsePayload()))));
 
                             String chaincodeIDName = transactionActionInfo.getChaincodeIDName();
                             String chaincodeIDVersion = transactionActionInfo.getChaincodeIDVersion();
                             String chaincodeIDPath = transactionActionInfo.getChaincodeIDPath();
-                            System.out.println(String.format("   Transaction action %d proposal chaincodeIDName: %s, chaincodeIDVersion: %s,  chaincodeIDPath: %s ", j,
+                            System.out.println(String.format("    proposal chaincodeIDName: %s, chaincodeIDVersion: %s,  chaincodeIDPath: %s ",
                                     chaincodeIDName, chaincodeIDVersion, chaincodeIDPath));
 
                             TxReadWriteSetInfo rwsetInfo = transactionActionInfo.getTxReadWriteSet();
                             if (null != rwsetInfo) {
-                                System.out.println(String.format("   Transaction action %d has %d name space read write sets", j, rwsetInfo.getNsRwsetCount()));
+                                System.out.println(String.format("    has %d name space read write sets", rwsetInfo.getNsRwsetCount()));
 
                                 for (TxReadWriteSetInfo.NsRwsetInfo nsRwsetInfo : rwsetInfo.getNsRwsetInfos()) {
                                     final String namespace = nsRwsetInfo.getNamespace();
@@ -377,7 +375,7 @@ public class FabricClient {
                                     for (KvRwset.KVRead readList : rws.getReadsList()) {
                                         rs++;
 
-                                        System.out.println(String.format("     Namespace %s read set %d key %s  version [%d:%d]", namespace, rs, readList.getKey(),
+                                        System.out.println(String.format("      Namespace %s read set %d key %s  version [%d:%d]", namespace, rs, readList.getKey(),
                                                 readList.getVersion().getBlockNum(), readList.getVersion().getTxNum()));
 
                                     }
@@ -387,7 +385,7 @@ public class FabricClient {
                                         rs++;
                                         String valAsString = printableString(new String(writeList.getValue().toByteArray(), UTF_8));
 
-                                        System.out.println(String.format("     Namespace %s write set %d key %s has value '%s' ", namespace, rs, writeList.getKey(), valAsString));
+                                        System.out.println(String.format("      Namespace %s write set %d key %s has value '%s' ", namespace, rs, writeList.getKey(), valAsString));
                                     }
                                 }
                             }

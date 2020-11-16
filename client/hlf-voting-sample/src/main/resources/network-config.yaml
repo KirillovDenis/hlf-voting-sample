@@ -7,7 +7,7 @@ description: "The network used in hlf-fabric-samples"
 version: 1.4.0
 
 client:
-  organization: org2
+  organization: org1
 
 channels:
   mychannel:
@@ -22,10 +22,10 @@ channels:
         eventSource: true
 
       peer0.org2.sample.com:
-        endorsingPeer: true
-        chaincodeQuery: true
+        endorsingPeer: false
+        chaincodeQuery: false
         ledgerQuery: true
-        eventSource: true
+        eventSource: false
 
     chaincodes:
       - votingcc:1.0

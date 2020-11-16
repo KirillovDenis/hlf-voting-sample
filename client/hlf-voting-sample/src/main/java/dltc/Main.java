@@ -51,17 +51,17 @@ public class Main {
     }
 
     private static AppUser getAppUser(FabricClient fabricClient) throws Exception {
-        AppUser appUser = null;
-        if (!Storage.exist(admin)) {
+        AppUser appUser;
+        if (!Storage.exist(orgInfo.getMspId(), admin)) {
             appUser = fabricClient.enrollUser(admin, orgInfo.getName(), orgInfo.getMspId(), secretA);
             Storage.save(appUser);
         }
 
-        if (Storage.exist(user)) {
-            return Storage.load(user);
+        if (Storage.exist(orgInfo.getMspId(), user)) {
+            return Storage.load(orgInfo.getMspId(), user);
         }
 
-        AppUser registrar = Storage.load(admin);
+        AppUser registrar = Storage.load(orgInfo.getMspId(), admin);
         String secret = user;
         try {
             fabricClient.registerUser(registrar, user, orgInfo.getName(), false, secret);
@@ -75,7 +75,7 @@ public class Main {
         return appUser;
     }
 
-    private static JSONObject getVoting() throws Exception{
+    private static JSONObject getVoting() {
         return new JSONObject()
             .put("title", "test voting")
             .put("id", "testVOTEID7")
@@ -98,7 +98,7 @@ public class Main {
                                     .put("value","answers2")))));
     }
 
-    private static JSONObject getBallot(String votingId) throws Exception{
+    private static JSONObject getBallot(String votingId) {
         return new JSONObject()
             .put("votingId", votingId)
             .put("questions", new JSONArray()

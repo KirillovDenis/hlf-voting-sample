@@ -34,8 +34,8 @@ public class Storage {
         return usersDir;
     }
 
-    private static String getUserDir(String userName) {
-        return getWorkDir() + File.separator + getUsersDir() + File.separator + userName;
+    private static String getUserDir(String msp, String userName) {
+        return getWorkDir() + File.separator + getUsersDir() + File.separator + msp + File.separator + userName;
     }
 
     private static String getUserKeysDir(String userName) {
@@ -43,42 +43,9 @@ public class Storage {
                 + getKeysDir();
     }
 
-    static void serialize(AppUser appUser, String userName) throws IOException {
-
-        String filePath = getUserDir(appUser.getName());
-        File dir = new File(filePath);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                Files.newOutputStream(Paths.get(filePath + "/" + userName + ".jso")))) {
-            oos.writeObject(appUser);
-        }
-    }
-
-    public static void save(AppUser appUser, FileOutputStream outputStream) throws IOException {
-        ObjectOutputStream objectOut = new ObjectOutputStream(outputStream);
-        objectOut.writeObject(appUser);
-        objectOut.close();
-    }
-
     public static AppUser load(FileInputStream fileInputStream) throws IOException, ClassNotFoundException {
         ObjectInputStream decoder = new ObjectInputStream(fileInputStream);
         return (AppUser) decoder.readObject();
-    }
-
-    public static Object load(File file) throws IOException, ClassNotFoundException {
-        FileInputStream fileInputStream = new FileInputStream(file);
-        ObjectInputStream decoder = new ObjectInputStream(fileInputStream);
-        Object obj = decoder.readObject();
-        decoder.close();
-        return obj;
-    }
-
-    public static Object loadObj(FileInputStream inputStream) throws IOException, ClassNotFoundException {
-        ObjectInputStream decoder = new ObjectInputStream(inputStream);
-        return decoder.readObject();
     }
 
     public static void save(AppUser appUser) throws IOException {
@@ -90,7 +57,7 @@ public class Storage {
             }
         }
 
-        File file = new File(getUserDir(appUser.getName()));
+        File file = new File(getUserDir(appUser.getMspId(), appUser.getName()));
         File usersDir = new File(getUsersDir());
         if (!usersDir.exists()) {
             usersDir.mkdirs();
@@ -109,14 +76,14 @@ public class Storage {
         save(appUser, file);
     }
 
-    public static AppUser load(String userName) throws IOException, ClassNotFoundException {
-        File file = new File(getUserDir(userName) + "/" + userName);
+    public static AppUser load(String mspId, String userName) throws IOException, ClassNotFoundException {
+        File file = new File(getUserDir(mspId, userName) + File.separator + userName);
         FileInputStream inputStream = new FileInputStream(file);
         return load(inputStream);
     }
 
-    public static boolean exist(String userName) {
-        File file = new File(getUserDir(userName) + "/" + userName);
+    public static boolean exist(String mspId, String userName) {
+        File file = new File(getUserDir(mspId, userName) + File.separator + userName);
         return file.exists();
     }
 
@@ -126,9 +93,7 @@ public class Storage {
         return generator.generateKeyPair();
     }
 
-    public static RSAPublicKey getPubKey(String userName)
-            throws Exception, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-
+    public static RSAPublicKey getPubKey(String userName) throws Exception {
         String filePath = getUserKeysDir(userName);
         File dir = new File(filePath);
         if (!dir.exists()) {
@@ -146,9 +111,7 @@ public class Storage {
         return loadPubKey(file.getAbsolutePath());
     }
 
-    public static RSAPrivateKey getPrivKey(String userName)
-            throws Exception, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-
+    public static RSAPrivateKey getPrivKey(String userName) throws Exception {
         String filesPath = getUserKeysDir(userName) + "/" + userName;
         File file = new File(filesPath + ".key");
         if (!file.isFile()) {
@@ -172,11 +135,6 @@ public class Storage {
         out.close();
     }
 
-    public static void SaveKey(Key key, FileOutputStream outputStream) throws IOException {
-        outputStream.write(key.getEncoded());
-        outputStream.close();
-    }
-
     public static void saveSignedKey(String userName, BigInteger signedKey) throws IOException {
         String filesPath = getUserKeysDir(userName) + "/" + userName + ".signed";
 
@@ -191,22 +149,9 @@ public class Storage {
         save(signedKey, file);
     }
 
-    public static BigInteger loadSignedKey(String userName) throws IOException, ClassNotFoundException {
-        String filesPath = getUserKeysDir(userName) + "/" + userName + ".signed";
-        File file = new File(filesPath);
-
-        return (BigInteger) load(file);
-    }
-
     public static void save(Serializable obj, File file) throws IOException {
         FileOutputStream outputStream = new FileOutputStream(file);
         ObjectOutputStream objectOut = new ObjectOutputStream(outputStream);
-        objectOut.writeObject(obj);
-        objectOut.close();
-    }
-
-    public static void save(Serializable obj, FileOutputStream fileOutputStream) throws IOException {
-        ObjectOutputStream objectOut = new ObjectOutputStream(fileOutputStream);
         objectOut.writeObject(obj);
         objectOut.close();
     }

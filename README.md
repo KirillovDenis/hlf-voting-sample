@@ -1,5 +1,9 @@
 # hlf-voting-sample
-Samples for Hyperledger Bootcamp session "HLF Identity Mixer in secret e-voting"
+Simple Hyperledger Fabric application.
+There are two organization:
+
+1. org1 (can send proposals and invoke chaincode)
+2. org2 (read-only, can view blocks)
 
 ## Getting Started
 
@@ -20,7 +24,24 @@ cd hlf-voting-sample/network
 
 ### Invoke chaincode
 To interact with chaincode java sdk are used.
-Run the following command
+Run application.
+```
+cd client/hlf-voting-sample
+
+mvn exec:java
+```
+
+### Read blocks
+To read block need change 'org1' client organization to 'org2' in 'client/hlf-voting-samples/src/main/resources/network-config.yaml'
+Then run
+#### 1. Update client organization
+Go to the resource folder
+```
+cd client/hlf-voting-sample/src/main/resources
+```
+Change 'org1' client organization to 'org2' in 'network-config.yaml' file
+
+#### 2. Run application
 ```
 cd client/hlf-voting-sample
 

@@ -1,11 +1,11 @@
 echo "##########################################################"
 echo "#####        building fabric host container      #########"
 echo "##########################################################"
-docker image build -t "dltc/fabrichost_test:latest" .
+docker image build -t "dltc/fabrichost_sample:1.0.0" .
 
 docker run -dit --name fabric_host_sample.com \
   -v $PWD:/go/src/github.com/hyperledger/fabric-network/ \
-  dltc/fabrichost_test
+  dltc/fabrichost_sample:1.0.0
 
 mkdir -p $PWD/fabric/core/chaincode/shim/ext/cid 
 docker cp fabric_host_sample.com:/go/src/github.com/hyperledger/fabric/core/chaincode/shim/ext/cid $PWD/fabric/core/chaincode/shim/ext/cid 

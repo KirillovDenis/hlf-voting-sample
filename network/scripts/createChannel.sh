@@ -80,5 +80,5 @@ echo "##########################################################"
 echo "#####        Instantiating chaincode 1           #########"
 echo "##########################################################"
 setOrg 1
-peer chaincode "$ACT" -o $ORDERER_PEER -C $CHANNEL_NAME -n "$CC_NAME"  -v "$VER_CC" -c '{"Args":["init"]}' -P "OR ('Org1MSP.member', 'idemixMSPID1.member)" \
+peer chaincode "$ACT" -o $ORDERER_PEER -C $CHANNEL_NAME -n "$CC_NAME"  -v "$VER_CC" -c '{"Args":["init"]}' -P "OR ('Org1MSP.member', 'idemixMSPID1.member')" \
  --collections-config /opt/gopath/src/github.com/chaincode/collection_config.json

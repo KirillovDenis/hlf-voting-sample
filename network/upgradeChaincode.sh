@@ -33,10 +33,10 @@ docker exec -e 'CORE_PEER_LOCALMSPID=Org1MSP' \
 -e 'CORE_PEER_ADDRESS=peer0.org1.sample.com:7051' \
 cli.sample.com peer chaincode install -n "$CC_NAME" -v "$VER_CC" -p "$CC_SRC_PATH" 
   
-docker exec -e 'CORE_PEER_LOCALMSPID=Org2MSP' \
--e 'CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.sample.com/users/Admin@org2.sample.com/msp' \
--e 'CORE_PEER_ADDRESS=peer0.org2.sample.com:9051' \
-cli.sample.com peer chaincode install -n "$CC_NAME" -v "$VER_CC" -p "$CC_SRC_PATH" 
+# docker exec -e 'CORE_PEER_LOCALMSPID=Org2MSP' \
+# -e 'CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.sample.com/users/Admin@org2.sample.com/msp' \
+# -e 'CORE_PEER_ADDRESS=peer0.org2.sample.com:9051' \
+# cli.sample.com peer chaincode install -n "$CC_NAME" -v "$VER_CC" -p "$CC_SRC_PATH" 
 
 
 docker exec cli.sample.com peer chaincode $ACT -o $ORDERER_PEER -C $CHANNEL_NAME -n "$CC_NAME"  -v "$VER_CC" -c '{"Args":["init"]}' -P "OR ('Org1MSP.member', 'idemixMSPID1.member')" \

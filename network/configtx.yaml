@@ -51,12 +51,12 @@ Organizations:
             Readers:
                 Type: Signature
                 Rule: "OR('Org2MSP.admin', 'Org2MSP.peer', 'Org2MSP.client')"
-            Writers:
-                Type: Signature
-                Rule: "OR('Org2MSP.admin', 'Org2MSP.client')"
-            Admins:
-                Type: Signature
-                Rule: "OR('Org2MSP.admin')"
+            # Writers:
+            #     Type: Signature
+            #     Rule: "OR('Org2MSP.admin', 'Org2MSP.client')"
+            # Admins:
+            #     Type: Signature
+            #     Rule: "OR('Org2MSP.admin')"
 
         AnchorPeers:
             - Host: peer0.org2.sample.com
@@ -73,13 +73,10 @@ Organizations:
         Policies:
             Readers:
                 Type: Signature
-                Rule: "OR('idemixMSPID1.admin', 'idemixMSPID1.peer', 'idemixMSPID1.client')"
+                Rule: "OR('idemixMSPID1.client')"
             Writers:
                 Type: Signature
-                Rule: "OR('idemixMSPID1.admin', 'idemixMSPID1.client')"
-            Admins:
-                Type: Signature
-                Rule: "OR('idemixMSPID1.admin')"
+                Rule: "OR('idemixMSPID1.client')"
 
 Capabilities:
     Channel: &ChannelCapabilities

@@ -53,11 +53,11 @@ echo "##########################################################"
 setOrg 1
 peer channel update -o $ORDERER_PEER -c $CHANNEL_NAME -f /opt/gopath/src/github.com/hyperledger/fabric/peer/configtx/Org1MSPanchors.tx
 
-echo "##########################################################"
-echo "#####            Updating channel 2              #########"
-echo "##########################################################"
-setOrg 2
-peer channel update -o $ORDERER_PEER -c $CHANNEL_NAME -f /opt/gopath/src/github.com/hyperledger/fabric/peer/configtx/Org2MSPanchors.tx
+# echo "##########################################################"
+# echo "#####            Updating channel 2              #########"
+# echo "##########################################################"
+# setOrg 2
+# peer channel update -o $ORDERER_PEER -c $CHANNEL_NAME -f /opt/gopath/src/github.com/hyperledger/fabric/peer/configtx/Org2MSPanchors.tx
 
 
 
@@ -68,11 +68,11 @@ setOrg 1
 peer chaincode install -n "$CC_NAME" -v "$VER_CC" -p "$CC_SRC_PATH"
 
 
-echo "##########################################################"
-echo "#####        Installing chaincode  2             #########"
-echo "##########################################################"    
-setOrg 2
-peer chaincode install -n "$CC_NAME" -v "$VER_CC" -p "$CC_SRC_PATH"
+# echo "##########################################################"
+# echo "#####        Installing chaincode  2             #########"
+# echo "##########################################################"    
+# setOrg 2
+# peer chaincode install -n "$CC_NAME" -v "$VER_CC" -p "$CC_SRC_PATH"
 
 
 

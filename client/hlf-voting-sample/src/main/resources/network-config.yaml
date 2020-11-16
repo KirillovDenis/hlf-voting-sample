@@ -1,0 +1,83 @@
+---
+name: "Network-Config-HLF-Sample"
+x-type: "hlfv1"
+
+description: "The network used in hlf-fabric-samples"
+
+version: 1.4.0
+
+client:
+  organization: org2
+
+channels:
+  mychannel:
+    orderers:
+      - orderer1.sample.com
+
+    peers:
+      peer0.org1.sample.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+      peer0.org2.sample.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+    chaincodes:
+      - votingcc:1.0
+
+
+organizations:
+  org1:
+    mspid: Org1MSP
+    peers:
+      - peer0.org1.sample.com
+    certificateAuthorities:
+      - ca.sample.com
+  org2:
+    mspid: Org2MSP
+    peers:
+      - peer0.org2.sample.com
+    certificateAuthorities:
+      - ca2.sample.com
+
+
+orderers:
+  orderer1.sample.com:
+    url: grpc://127.0.0.1:57050
+    grpcOptions:
+      hostnameOverride: orderer1.sample.com
+
+
+peers:
+  peer0.org1.sample.com:
+    url: grpc://127.0.0.1:57051
+    eventUrl: grpc://127.0.0.1:57053
+    grpcOptions:
+      hostnameOverride: peer0.org1.sample.com
+
+  peer0.org2.sample.com:
+    url: grpc://127.0.0.1:9051
+    eventUrl: grpc://127.0.0.1:9053
+    grpcOptions:
+      hostnameOverride: peer0.org2.sample.com
+
+
+certificateAuthorities:
+  ca.sample.com:
+    url: http://127.0.0.1:57054
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca.sample.com
+
+  ca2.sample.com:
+    url: http://127.0.0.1:58054
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca2.sample.com

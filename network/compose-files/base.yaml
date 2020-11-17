@@ -7,7 +7,7 @@ version: '2'
 
 services:
   peer-base:
-    image: hyperledger/fabric-peer:1.4.1
+    image: hyperledger/fabric-peer:${FABRIC_VERSION}
     environment:
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_basic
@@ -23,7 +23,7 @@ services:
       - ./../config:/etc/hyperledger/configtx
 
   orderer-base:
-    image: hyperledger/fabric-orderer:1.4.1
+    image: hyperledger/fabric-orderer:${FABRIC_VERSION}
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -37,7 +37,7 @@ services:
 
 
   ca-base:
-    image: hyperledger/fabric-ca
+    image: hyperledger/fabric-ca:${FABRIC_VERSION}
     environment:
       - FABRIC_LOGGING_SPEC=info
       - ORDERER_GENERAL_TLS_ENABLED=false
@@ -48,7 +48,7 @@ services:
     command: sh -c 'fabric-ca-server start -b admin:adminpw'
 
   cli-base:
-    image: hyperledger/fabric-tools
+    image: hyperledger/fabric-tools:${FABRIC_VERSION}
     tty: true
     environment:
       - CHANNEL_NAME=mychannel

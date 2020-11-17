@@ -36,7 +36,6 @@ services:
 
   peer0.org1.sample.com:
     container_name: peer0.org1.sample.com
-    image: hyperledger/fabric-peer
     extends:
       file: base.yaml
       service: peer-base
@@ -60,7 +59,7 @@ services:
 
   couchdb.sample.com0:
     container_name: couchdb.sample.com0
-    image: hyperledger/fabric-couchdb
+    image: hyperledger/fabric-couchdb:${THIRD_PARTY_VERSION}
     environment:
       - COUCHDB_USER=
       - COUCHDB_PASSWORD=
@@ -85,7 +84,6 @@ services:
 
   peer0.org2.sample.com:
     container_name: peer0.org2.sample.com
-    image: hyperledger/fabric-peer
     extends:
       file: base.yaml
       service: peer-base
@@ -109,7 +107,7 @@ services:
 
   couchdb2.sample.com0:
     container_name: couchdb2.sample.com0
-    image: hyperledger/fabric-couchdb
+    image: hyperledger/fabric-couchdb:${THIRD_PARTY_VERSION}
     environment:
       - COUCHDB_USER=
       - COUCHDB_PASSWORD=

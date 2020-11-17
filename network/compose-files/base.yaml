@@ -16,6 +16,7 @@ services:
       - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
       - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp/
+      - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:${FABRIC_VERSION}
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric
     command: peer node start
     volumes:

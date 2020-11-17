@@ -1,7 +1,14 @@
+#!/bin/bash
+echo "##########################################################"
+echo "#####          exporting .env variables          #########"
+echo "##########################################################"
+export $(grep -v '^#' .env | xargs)
+ 
 echo "##########################################################"
 echo "#####        building fabric host container      #########"
 echo "##########################################################"
-docker image build -t "dltc/fabrichost_sample:1.0.0" .
+docker image build --build-arg FAB_VERSION=$FABRIC_VERSION --build-arg COUCHDB_VERSION=$THIRD_PARTY_VERSION \
+  -t "dltc/fabrichost_sample:1.0.0" .
 
 docker run -dit --name fabric_host_sample.com \
   -v $PWD:/go/src/github.com/hyperledger/fabric-network/ \
